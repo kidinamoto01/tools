@@ -6,7 +6,7 @@ import (
 
 	rpc "github.com/tendermint/tendermint/rpc/lib/server"
 	"github.com/tendermint/tmlibs/log"
-	monitor "github.com/tendermint/tools/tm-monitor/monitor"
+	monitor "github.com/kidinamoto01/tools/tm-monitor/monitor"
 )
 
 func startRPC(listenAddr string, m *monitor.Monitor, logger log.Logger) {
@@ -37,8 +37,8 @@ func routes(m *monitor.Monitor) map[string]*rpc.RPCFunc {
 
 // RPCStatus returns common statistics for the network and statistics per node.
 func RPCStatus(m *monitor.Monitor) interface{} {
-	return func() (networkAndNodes, error) {
-		return networkAndNodes{m.Network, m.Nodes}, nil
+	return func() (NetworkAndNodes, error) {
+		return NetworkAndNodes{m.Network, m.Nodes}, nil
 	}
 }
 
@@ -118,7 +118,7 @@ func RPCUnmonitor(m *monitor.Monitor) interface{} {
 
 //--> types
 
-type networkAndNodes struct {
+type NetworkAndNodes struct {
 	Network *monitor.Network `json:"network"`
 	Nodes   []*monitor.Node  `json:"nodes"`
 }

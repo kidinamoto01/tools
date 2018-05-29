@@ -12,7 +12,7 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 	"github.com/tendermint/tmlibs/events"
 	"github.com/tendermint/tmlibs/log"
-	em "github.com/tendermint/tools/tm-monitor/eventmeter"
+	em "github.com/kidinamoto01/tools/tm-monitor/eventmeter"
 )
 
 const maxRestarts = 25
@@ -39,6 +39,7 @@ type Node struct {
 	disconnectCh   chan<- bool
 
 	checkIsValidatorInterval time.Duration
+	checkIsOnlineInterval time.Duration
 
 	quit chan struct{}
 
@@ -60,6 +61,7 @@ func NewNodeWithEventMeterAndRpcClient(rpcAddr string, em eventMeter, rpcClient 
 		Name:      rpcAddr,
 		quit:      make(chan struct{}),
 		checkIsValidatorInterval: 5 * time.Second,
+		checkIsOnlineInterval: 3 * time.Second,
 		logger: log.NewNopLogger(),
 	}
 
@@ -112,6 +114,10 @@ func (n *Node) Start() error {
 
 	n.checkIsValidator()
 	go n.checkIsValidatorLoop()
+
+	n.checkIsOnline()
+	go n.checkIsOnlineLoop()
+
 
 	return nil
 }
@@ -225,6 +231,28 @@ func (n *Node) checkIsValidator() {
 		n.logger.Info("check is validator failed", "err", err)
 	}
 }
+
+func (n *Node) checkIsOnline()  {
+	status := new(ctypes.ResultStatus)
+	_, err := n.rpcClient.Call("status", nil, status)
+	if err != nil {
+		n.Online= false
+	}else{
+		n.Online= true
+	}
+}
+
+func (n *Node) checkIsOnlineLoop() {
+	for {
+		select {
+		case <-n.quit:
+			return
+		case <-time.After(n.checkIsOnlineInterval):
+			n.checkIsOnline()
+		}
+	}
+}
+
 
 func (n *Node) getPubKey() (crypto.PubKey, error) {
 	if n.pubKey != nil {

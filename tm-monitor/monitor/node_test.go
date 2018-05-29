@@ -27,6 +27,19 @@ func TestNodeStartStop(t *testing.T) {
 	assert.Equal(t, true, n.IsValidator)
 }
 
+func TestNodeRestart(t *testing.T) {
+	n, _ := startValidatorNode(t)
+	
+	n.Stop()
+
+	n.Start()
+
+	assert.Equal(t, true, n.Online)
+	assert.Equal(t, true, n.IsValidator)
+
+
+}
+
 func TestNodeNewBlockReceived(t *testing.T) {
 	blockCh := make(chan tmtypes.Header, 100)
 	n, emMock := startValidatorNode(t)
@@ -91,3 +104,8 @@ func startValidatorNode(t *testing.T) (n *monitor.Node, emMock *mock.EventMeter)
 	require.Nil(t, err)
 	return
 }
+
+//func startValidatorNode(t *testing.T){
+//
+//
+//}

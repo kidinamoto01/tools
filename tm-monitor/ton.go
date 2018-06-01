@@ -68,7 +68,7 @@ func (o *Ton) printHeader() {
 	//ratio :=int(n.PowerSum)*100/totalSteaks
 	fmt.Println("Bonded Percentage: ",(n.PowerSum)*100/totalSteaks,"% ")
 	fmt.Fprintf(o.Output, "Height: %d\n", n.Height)
-	fmt.Fprintf(o.Output, "Power Online: %d\n", n.PowerOnline,"%")
+	fmt.Fprintf(o.Output, "Power Online: %d %%\n", n.PowerOnline)
 
 	fmt.Fprintf(o.Output, "Avg block time: %.3f ms\n", n.AvgBlockTime)
 	fmt.Fprintf(o.Output, "Avg tx throughput: %.0f per sec\n", n.AvgTxThroughput)

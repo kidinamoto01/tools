@@ -190,7 +190,7 @@ func (m *Monitor) listen(nodeName string, blockCh <-chan tmtypes.Header,  fullbl
 			m.Network.NewBlock(b)
 			m.Network.NodeIsOnline(nodeName)
 		case fb := <-fullblockCh:
-
+			//get a full block data
 			m.Network.NewFullBlock(fb)
 			//m.Network.NodeIsOnline(nodeName)
 		case l := <-blockLatencyCh:
@@ -262,8 +262,12 @@ func (m *Monitor) updateNumValidatorLoop() {
 			}
 			m.mtx.Unlock()
 
+			//TODO:
 			m.Network.UpdateNumValidatorsForHeight(num, height)
+			//update the total bonded steaks from stats we get of first node
 			m.Network.UpdateTotalBondForHeight(m.Nodes[0].GetTotalSteaks())
+			//update the stats of precommits ratio from what we got from the first node
+			m.Network.UpdatePrecommitRatioForHeight(m.Nodes[0].PrecommitRatio)
 		}
 	}
 }

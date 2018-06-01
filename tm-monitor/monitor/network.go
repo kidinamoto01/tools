@@ -47,6 +47,8 @@ type Network struct {
 	NumNodesMonitoredOnline int `json:"num_nodes_monitored_online"`
 
 	PowerSum    int64		`json:"power_sum"`
+	PowerOnline   int		`json:"power_online"`
+
 	Health Health `json:"health"`
 
 	UptimeData *UptimeData `json:"uptime_data"`
@@ -243,9 +245,19 @@ func (n *Network) StartTime() time.Time {
 //	return sum
 //}
 //
+
+//update the total bonded token in the network
 func (n *Network) UpdateTotalBondForHeight(sum  int64) {
 	n.mu.Lock()
 	defer n.mu.Unlock()
 	n.PowerSum =sum
 }
+
+//update the total bonded token in the network
+func (n *Network) UpdatePrecommitRatioForHeight(ratio  int) {
+	n.mu.Lock()
+	defer n.mu.Unlock()
+	n.PowerOnline =ratio
+}
+
 

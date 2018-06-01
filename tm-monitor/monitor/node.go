@@ -13,6 +13,7 @@ import (
 	"github.com/tendermint/tmlibs/events"
 	"github.com/tendermint/tmlibs/log"
 	em "github.com/kidinamoto01/tools/tm-monitor/eventmeter"
+	"fmt"
 )
 
 const maxRestarts = 25
@@ -26,8 +27,12 @@ type Node struct {
 	PowerRatio  int       `json:"power_ratio"`
 	pubKey      crypto.PubKey `json:"pub_key"`
 
+	//how many precommits has it submitted
 	PrecommitSum int `json:"pc_sum"`
+	//how many precommits has it missed
 	PrecommitMiss int `json:"pc_miss"`
+	//how many percentage of precommits has this block included
+	PrecommitRatio int `json:"pc_ratio"`
 
 	Name         string  `json:"name"`
 	Online       bool    `json:"online"`
@@ -164,25 +169,55 @@ func newFullBlockCallback(n *Node) em.EventCallbackFunc {
 
 		n.Height = block.Height
 
-		n.logger.Info("new block", "height", block.Height, "hash", block.LastCommit.Hash())
+		n.logger.Info("new full block", "height", block.Height, "hash", block.LastCommit.Hash())
 
 		pc := block.LastCommit.Precommits
-		voteNil := true
-		for _,commit:=range pc {
-			if pc != nil && commit != nil&& n.pubKey!= nil {
-				if n.pubKey.Address().String()==commit.ValidatorAddress.String() {
-					n.PrecommitSum ++
-					voteNil = false
-				}
+		//获得的总权重
+		powerSum,err := n.GetPowerSum(pc)
+
+		if err != nil{
+			return
+		}else{
+
+			//此块一共获得了多少比例的投票
+			total  := int(n.GetTotalSteaks())
+			if total == 0{
+				n.PrecommitRatio = 0
+				fmt.Println("error calculate the ratio")
+			}else{
+				n.PrecommitRatio = int(powerSum)*100/total
+				//fmt.Println("total: ",int(n.GetTotalSteaks()))
+			     fmt.Println("ratio: ",n.PrecommitRatio)
 			}
+
 		}
 
-		if voteNil {
-			n.PrecommitMiss ++
-		}
+		//update the metrics
+		n.updatePrecommitMetrics(pc)
+
 		if n.fullblockCh != nil {
 			n.fullblockCh <- *block
 		}
+	}
+}
+
+//this function will update the metrics about the precommits
+func (n *Node) updatePrecommitMetrics(pc []*tmtypes.Vote){
+
+	voteNil := true
+
+
+	for _,commit:=range pc {
+		if pc != nil && commit != nil&& n.pubKey!= nil {
+			if n.pubKey.Address().String()==commit.ValidatorAddress.String() {
+				n.PrecommitSum ++
+				voteNil = false
+			}
+		}
+	}
+
+	if voteNil {
+		n.PrecommitMiss ++
 	}
 }
 
@@ -248,14 +283,35 @@ func (n *Node) validators() (height int64, validators []*tmtypes.Validator, err 
 	return vals.BlockHeight, vals.Validators, nil
 }
 
-//统计每一个块中的precommit
-func (n *Node) precommits() (height int64, validators []*tmtypes.Validator, err error) {
+////获得某一个高度的validator
+func (n *Node) GetValidatorsAt(height int64) (validators []*tmtypes.Validator, err error) {
 	vals := new(ctypes.ResultValidators)
 	if _, err = n.rpcClient.Call("validators", nil, vals); err != nil {
-		return 0, make([]*tmtypes.Validator, 0), err
+		return  make([]*tmtypes.Validator, 0), err
 	}
-	return vals.BlockHeight, vals.Validators, nil
+//	fmt.Println(vals.BlockHeight)
+	return vals.Validators, nil
 }
+
+
+////获得某一个高度precommit的全部Power
+func (n *Node) GetPowerSum(pc []*tmtypes.Vote) (sum int64, err error) {
+
+	_,vals,err := n.validators()
+	if err != nil{
+		return 0, err
+	}else{
+		result := int64(0)
+		for _,commit:=range pc {
+			if pc != nil && commit != nil {
+				result += vals[commit.ValidatorIndex].VotingPower
+			}
+		}
+		return result, nil
+	}
+
+}
+
 
 func (n *Node) checkIsValidatorLoop() {
 	for {
@@ -323,7 +379,7 @@ func UnmarshalEvent(b json.RawMessage) (string, events.EventData, error) {
 
 
 ////get total bonded steaks
-func (n *Node) GetTotalSteaks() int64{
+func (n *Node) GetTotalSteaks()int64{
 	sum := int64(0)
 	_,vs,err:= n.validators()
 

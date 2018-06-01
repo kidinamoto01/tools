@@ -68,6 +68,8 @@ func (o *Ton) printHeader() {
 	//ratio :=int(n.PowerSum)*100/totalSteaks
 	fmt.Println("Bonded Percentage: ",(n.PowerSum)*100/totalSteaks,"% ")
 	fmt.Fprintf(o.Output, "Height: %d\n", n.Height)
+	fmt.Fprintf(o.Output, "Power Online: %d\n", n.PowerOnline,"%")
+
 	fmt.Fprintf(o.Output, "Avg block time: %.3f ms\n", n.AvgBlockTime)
 	fmt.Fprintf(o.Output, "Avg tx throughput: %.0f per sec\n", n.AvgTxThroughput)
 	fmt.Fprintf(o.Output, "Avg block latency: %.3f ms\n", n.AvgBlockLatency)
@@ -82,12 +84,13 @@ func (o *Ton) printTable() {
 		for _, n := range o.monitor.Nodes {
 			fmt.Fprintln(w, fmt.Sprintf("%s\t%d\t%.3f ms\t%v\t%v\t%d\t%d\t%d\t%d\t", n.Name, n.Height, n.BlockLatency, n.Online, n.IsValidator,n.Power,n.Power*100/nw.PowerSum,n.PrecommitSum,n.PrecommitMiss))
 		}
-	}else{
-		fmt.Fprintln(w, "NAME\tHEIGHT\tBLOCK LATENCY\tONLINE\tVALIDATOR\tPOWER\tRatio\tPrecommit_Sum\tPrecommit_Miss\t")
-		for _, n := range o.monitor.Nodes {
-			fmt.Fprintln(w, fmt.Sprintf("%s\t%d\t%.3f ms\t%v\t%v\t%d\t%d\t%d\t%d\t", n.Name, n.Height, n.BlockLatency, n.Online, n.IsValidator,n.Power,0,n.PrecommitSum,n.PrecommitMiss))
-		}
 	}
+	// else{
+	//	fmt.Fprintln(w, "NAME\tHEIGHT\tBLOCK LATENCY\tONLINE\tVALIDATOR\tPOWER\tRatio\tPrecommit_Sum\tPrecommit_Miss\t")
+	//	for _, n := range o.monitor.Nodes {
+	//		fmt.Fprintln(w, fmt.Sprintf("%s\t%d\t%.3f ms\t%v\t%v\t%d\t%d\t%d\t%d\t", n.Name, n.Height, n.BlockLatency, n.Online, n.IsValidator,n.Power,0,n.PrecommitSum,n.PrecommitMiss))
+	//	}
+	//}
 
 	w.Flush()
 }

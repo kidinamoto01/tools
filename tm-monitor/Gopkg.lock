@@ -206,7 +206,6 @@
   name = "github.com/tendermint/tools"
   packages = [
     "tm-monitor/eventmeter",
-    "tm-monitor/mock",
     "tm-monitor/monitor"
   ]
   revision = "f73b089e3fcfa9bc92ec347c004871b150f23c23"
@@ -296,6 +295,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "e2edfe12deb00d2afa1c7b76cf7ebe334784bcdb8636328761c3582f695108a9"
+  inputs-digest = "9cdaedf81afc9f7e06facc7e45cdbe9a34996ec264a0d49ee3fb70d9a4bb1e88"
   solver-name = "gps-cdcl"
   solver-version = 1

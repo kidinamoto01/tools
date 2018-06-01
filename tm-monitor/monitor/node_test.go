@@ -9,10 +9,11 @@ import (
 	crypto "github.com/tendermint/go-crypto"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 	tmtypes "github.com/tendermint/tendermint/types"
-	em "github.com/tendermint/tools/tm-monitor/eventmeter"
-	mock "github.com/tendermint/tools/tm-monitor/mock"
-	monitor "github.com/tendermint/tools/tm-monitor/monitor"
+	em "github.com/kidinamoto01/tools/tm-monitor/eventmeter"
+	mock "github.com/kidinamoto01/tools/tm-monitor/mock"
+	monitor "github.com/kidinamoto01/tools/tm-monitor/monitor"
 	"github.com/tendermint/go-amino"
+	"fmt"
 )
 
 const (
@@ -74,12 +75,50 @@ func TestNumValidators(t *testing.T) {
 	assert.Equal(t, 1, num)
 }
 
+func TestGetValidators(t *testing.T) {
+	n, _ := startValidatorNode(t)
+	defer n.Stop()
+
+	num, err := n.GetValidatorsAt(blockHeight)
+	fmt.Println(num)
+	assert.Nil(t, err)
+}
+
+func TestSumOfPower(t *testing.T) {
+	n, _ := startMultipleValidatorNode(t)
+	defer n.Stop()
+
+	sum, err := n.GetTotalSteaks()
+	assert.Nil(t, err)
+	assert.Equal(t, int64(200), sum)
+}
+
 func startValidatorNode(t *testing.T) (n *monitor.Node, emMock *mock.EventMeter) {
 	emMock = &mock.EventMeter{}
 
 	stubs := make(map[string]interface{})
 	pubKey := crypto.GenPrivKeyEd25519().PubKey()
 	stubs["validators"] = ctypes.ResultValidators{BlockHeight: blockHeight, Validators: []*tmtypes.Validator{tmtypes.NewValidator(pubKey, 0)}}
+	stubs["status"] = ctypes.ResultStatus{ValidatorInfo: ctypes.ValidatorInfo{PubKey: pubKey}}
+	cdc := amino.NewCodec()
+	rpcClientMock := &mock.RpcClient{Stubs: stubs}
+	rpcClientMock.SetCodec(cdc)
+
+	n = monitor.NewNodeWithEventMeterAndRpcClient("tcp://127.0.0.1:46657", emMock, rpcClientMock)
+
+	err := n.Start()
+	require.Nil(t, err)
+	return
+}
+
+func startMultipleValidatorNode(t *testing.T) (n *monitor.Node, emMock *mock.EventMeter) {
+	emMock = &mock.EventMeter{}
+
+	stubs := make(map[string]interface{})
+	pubKey := crypto.GenPrivKeyEd25519().PubKey()
+	pubKey2 := crypto.GenPrivKeyEd25519().PubKey()
+
+	stubs["validators"] = ctypes.ResultValidators{BlockHeight: blockHeight, Validators: []*tmtypes.Validator{tmtypes.NewValidator(pubKey, 100),tmtypes.NewValidator(pubKey2, 100)}}
 	stubs["status"] = ctypes.ResultStatus{ValidatorInfo: ctypes.ValidatorInfo{PubKey: pubKey}}
 	cdc := amino.NewCodec()
 	rpcClientMock := &mock.RpcClient{Stubs: stubs}
